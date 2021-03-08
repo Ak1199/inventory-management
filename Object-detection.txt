@@ -1,0 +1,14 @@
+from keras.models import load_model
+from keras.preprocessing import image
+import numpy as np
+
+#load the model
+model=load_model("t1.h5")
+
+#load the image
+img= image.load_img(r"C:\Users\Lenovo\Desktop\img1.jpeg", target_size=(64,64))
+
+x=image.img_to_array(img)
+x=np.expand_dims(x,axis=0)
+#output is stored in variable ‘pred’
+pred=model.predict_classes(x)
