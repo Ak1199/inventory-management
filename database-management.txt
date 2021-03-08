@@ -1,0 +1,57 @@
+import sqlite3 as ql
+import pandas as pd
+
+def connect():
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS Inventory (No INTEGER PRIMARY KEY, Product TEXT, Price REAL, Qty INTEGER)")
+    conn.commit()
+    conn.close()
+    
+connect()
+
+def insert(Product="", Price="", Qty=""):
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("INSERT INTO Inventory VALUES (NULL,?,?,?)", (Product, Price, Qty))
+    save()
+    conn.commit()
+    conn.close()
+
+def view():
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("SELECT * FROM Inventory")
+    rows=cur.fetchall()
+    save()
+    conn.close()
+    return rows
+
+def delete(Product="", Price=""):
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("DELETE FROM Inventory WHERE Product=? AND Price=?", (Product, Price))
+    save()
+    conn.commit()
+    conn.close()
+    
+def search(Product="", Price=""):
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("SELECT * FROM Inventory WHERE Product=? OR Price=?", (Product, Price))
+    rows=cur.fetchall()
+    save()
+    conn.close()
+    return rows
+
+def update(Product="", Price=""):
+    conn=ql.connect("B://inventory.db")
+    cur=conn.cursor()
+    cur.execute("UPDATE Inventory SET Qty=Qty+1 WHERE Product=?, Price=?", (Product, Price))
+    save()
+    conn.commit()
+    conn.close()
+    
+def save():
+    df = pd.read_sql("SELECT * FROM Inventory", ql.connect("B://inventory.db"))
+    df.to_csv("B://inven.csv", index=False)
