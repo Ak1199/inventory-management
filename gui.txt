@@ -1,0 +1,176 @@
+from tkinter import *  
+from tkinter import filedialog
+from tkinter import ttk
+from PIL import ImageTk,Image  
+from io import BytesIO
+import requests
+import numpy as np
+import backend
+
+def startAnimation():
+    global animationOn
+    animationOn = True
+    animate()
+
+def stopAnimation():
+    global animationOn
+    animationOn = False
+   
+
+def animate():
+    global size, label, width, height
+    img_resp=requests.get(url)
+    newIm = Image.open(BytesIO(img_resp.content))
+    photo = ImageTk.PhotoImage(newIm)
+    label.configure(image = photo)
+    label.image = photo
+    if animationOn:
+        label.after(20, animate)
+
+def display():
+    box.delete(0, END)
+    for row in backend.view():
+        box.insert(END, row)
+
+
+def searchc():
+    box.delete(0, END)
+    s=backend.search(e1_value.get(), e2_value.get())
+    box.insert(END, s)
+        
+def add():
+    s=backend.search(e1_value.get(), e2_value.get())
+    if s=="Does not exist":
+        i=backend.insert(e1_value.get(), e2_value.get(), e3_value.get())
+        box.delete(0, END)
+        box.insert(END, i)
+    elif type(s)==tuple:
+        u=backend.update(e1_value.get())
+        box.delete(0, END)
+        box.insert(END, u)
+    e1.delete(0, END)
+    e2.delete(0, END)
+    e3.delete(0, END)
+
+def dlt():
+    backend.delete(e1_value.get(), e2_value.get())
+    display()
+    e1.delete(0, END)
+    e2.delete(0, END)
+    e3.delete(0, END)
+
+url="http://10.22.75.62:8080/shot.jpg"
+animationOn = False
+
+
+global label, height, width
+img_resp=requests.get(url)
+im = Image.open(BytesIO(img_resp.content))
+im=im.resize((10, 10), Image.ANTIALIAS)
+
+root = Tk()
+root.title('Inventory Management GUI')
+tabControl = ttk.Notebook(root) 
+tab1 = ttk.Frame(tabControl, width=500, height=500) 
+tab2 = ttk.Frame(tabControl,width=400,height=300)
+
+tabControl.add(tab1, text ='Object Detection') 
+tabControl.add(tab2, text ='Training') 
+tabControl.grid() 
+
+######OBJECT DETECTION TAB########
+root1=ttk.Frame(tab1, width=500, height=500)
+root1.grid()
+
+# LABELS
+l1=Label(root1, text="Product")
+l1.grid(row=0, column=0)
+l2=Label(root1, text="Price")
+l2.grid(row=0, column=3)
+l3=Label(root1, text="Qty")
+l3.grid(row=0, column=6)
+l4=Label(root1, text="Live Video")
+l4.grid(row=1, column=5)
+
+# ENTRIES
+e1_value=StringVar()
+e1=Entry(root1, textvariable=e1_value)
+e1.grid(row=0, column=1, columnspan=2)
+
+e2_value=StringVar()
+e2=Entry(root1, textvariable=e2_value)
+e2.grid(row=0, column=4, columnspan=2)
+
+e3_value=StringVar()
+e3=Entry(root1, textvariable=e3_value)
+e3.grid(row=0, column=7, columnspan=2)
+
+lst1=[e1_value.get(), e2_value.get(), e3_value.get()]
+
+# BUTTONS
+b1=Button(root1, text="Search", command=searchc)
+b1.grid(row=1, column=0)
+b2=Button(root1, text="Add manually", command=add)
+b2.grid(row=1, column=1)
+b3=Button(root1, text="Delete", command=dlt)
+b3.grid(row=1, column=2)
+b4=Button(root1, text="View all", command=display)
+b4.grid(row=1, column=3)
+b5=Button(root1, text="Start", command=startAnimation)
+b5.grid(row=1, column=6)
+b6=Button(root1, text="Stop", command=stopAnimation)
+b6.grid(row=1, column=7)
+
+# RECENT 10 ENTRIES
+box=Listbox(root1, height=20, width=50)
+box.grid(row=3, column=0, rowspan=8, columnspan=4)
+
+#SCROLL BAR
+sb=Scrollbar(root1)
+sb.grid(row=3, column=4, rowspan=8)
+
+box.configure(yscrollcommand=sb.set)
+sb.configure(command=box.yview)
+
+# VIDEO FRAME
+f1=Frame(root1, background='white')  
+f1.grid(row=3, column=5, columnspan=3)
+
+photo = ImageTk.PhotoImage(im)
+label = Label(f1, image=photo)
+label.image = photo
+label.grid(row=3, column=5, columnspan=3)
+animate()
+
+######TRAINING TAB######
+def open_img(): 
+	# Select the Imagename from a folder 
+	x = openfilename() 
+
+	# opens the image 
+	img = Image.open(x) 
+	
+	# resize the image and apply a high-quality down sampling filter 
+	img = img.resize((250, 250), Image.ANTIALIAS) 
+
+	# PhotoImage class is used to add image to widgets, icons etc 
+	img = ImageTk.PhotoImage(img) 
+
+	# create a label 
+	panel = Label(root, image = img) 
+	
+	# set the image as img 
+	panel.image = img 
+	panel.grid(row = 0) 
+
+def openfilename(): 
+	filename = filedialog.askopenfilename(title ='pen') 
+	return filename 
+
+root2=ttk.Frame(tab2,width=400,height=350) 
+root2.grid()
+btn = Button(root2, text ='Open Image', command = open_img)
+btn.grid(row = 5, columnspan =4)
+btn.place(x=150,y=0)
+
+root.mainloop()
